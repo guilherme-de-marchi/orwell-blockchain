@@ -1,3 +1,3 @@
-module github.com/Guilherme-De-Marchi/orwells-blockchain
+module github.com/Guilherme-De-Marchi/orwell-blockchain
 
 go 1.17

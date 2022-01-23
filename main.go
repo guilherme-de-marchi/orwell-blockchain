@@ -1,34 +1,22 @@
 package main
 
 import (
-	"encoding/hex"
 	"fmt"
 
-	"github.com/Guilherme-De-Marchi/orwells-blockchain/blockchain"
-	"github.com/Guilherme-De-Marchi/orwells-blockchain/security"
+	"github.com/Guilherme-De-Marchi/orwell-blockchain/blockchain"
 )
 
 func main() {
-	key, err := security.GenerateRSAKey(2048)
-	if err != nil {
-		fmt.Println(err)
+	bc := blockchain.NewBlockchain()
+	bc.Init()
+
+	bc.AddNewBlock([]byte("block 1"))
+	bc.AddNewBlock([]byte("block 2"))
+	bc.AddNewBlock([]byte("block 3"))
+
+	for _, b := range bc.Blocks {
+		fmt.Printf("PrevHash: %x\n", b.PrevHash)
+		fmt.Printf("Data: %s\n", b.Data)
+		fmt.Printf("Hash: %x\n\n", b.Hash)
 	}
-
-	genesis, err := blockchain.NewBlock("testing", []byte(""))
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	genesis.Sign(key)
-
-	fmt.Println(
-		genesis.Data,
-		hex.EncodeToString(genesis.Hash),
-		hex.EncodeToString(genesis.PreviousBlockHash),
-		genesis.Timestamp,
-		hex.EncodeToString(genesis.Signature),
-	)
-
-	verif := security.VerifySignature(genesis.Hash, genesis.Signature, &key.PublicKey)
-	fmt.Println(verif)
 }
