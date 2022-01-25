@@ -6,30 +6,28 @@ import (
 	"github.com/Guilherme-De-Marchi/orwell-blockchain/blockchain"
 )
 
-type ProofOfWork struct {
-	Block      *blockchain.Block
+type PoW struct {
 	Difficulty int
 	Target     []byte
 }
 
-func NewProofOfWork(b *blockchain.Block, diff int) *ProofOfWork {
-	return &ProofOfWork{
-		Block:      b,
+func NewPoW(diff int) PoW {
+	return PoW{
 		Difficulty: diff,
 		Target:     make([]byte, diff),
 	}
 }
 
-func (p *ProofOfWork) Run() {
+func (p PoW) Apply(b *blockchain.Block) {
 	for {
-		p.Block.Hash = p.Block.DeriveHash()
-		if bytes.Equal(p.Block.Hash[:p.Difficulty], p.Target) {
+		b.DeriveHash()
+		if bytes.Equal(b.Hash[:p.Difficulty], p.Target) {
 			break
 		}
-		p.Block.Nonce++
+		b.Nonce++
 	}
 }
 
-func (p *ProofOfWork) Validate() bool {
-	return bytes.Equal(p.Block.Hash[:p.Difficulty], p.Target)
+func (p PoW) Validate(b *blockchain.Block) bool {
+	return bytes.Equal(b.Hash[:p.Difficulty], p.Target)
 }

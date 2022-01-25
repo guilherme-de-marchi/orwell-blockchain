@@ -20,7 +20,7 @@ func NewBlock(prevHash, data []byte) *Block {
 	}
 }
 
-func (b *Block) DeriveHash() []byte {
+func (b *Block) DeriveHash() {
 	nonce := make([]byte, 8)
 	binary.LittleEndian.PutUint64(nonce, b.Nonce)
 
@@ -34,5 +34,5 @@ func (b *Block) DeriveHash() []byte {
 	)
 
 	hash := sha256.Sum256(info)
-	return hash[:]
+	b.Hash = hash[:]
 }
