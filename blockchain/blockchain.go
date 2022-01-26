@@ -1,7 +1,7 @@
 package blockchain
 
 import (
-	"fmt"
+	"github.com/dgraph-io/badger/v3"
 )
 
 type Proofer interface {
@@ -10,49 +10,70 @@ type Proofer interface {
 }
 
 type Blockchain struct {
-	Blocks []*Block
-	Proof  Proofer
+	LastHash []byte
+	Database *badger.DB
+	Proof    Proofer
 }
 
-func NewBlockchain(p Proofer) *Blockchain {
+func NewBlockchain(db *badger.DB, p Proofer) *Blockchain {
 	return &Blockchain{
-		Proof: p,
+		Database: db,
+		Proof:    p,
 	}
 }
 
-func (bc *Blockchain) GetBlock(i int) (*Block, error) {
-	if len(bc.Blocks) == 0 {
-		if i == -1 {
-			return &Block{}, nil
+func (chain *Blockchain) GetBlock(hash []byte) (*Block, error) {
+	if hash == nil {
+		return new(Block), nil
+	}
+
+	var b *Block
+	var bs []byte
+	err := chain.Database.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(hash)
+		if err != nil {
+			return err
 		}
-		return nil, fmt.Errorf("void Blockchain.Blocks\nLen: %v", len(bc.Blocks))
-	}
-	if i == -1 {
-		return bc.Blocks[len(bc.Blocks)-1], nil
-	}
-	if len(bc.Blocks) == 0 || len(bc.Blocks)-1 < i {
-		return nil, fmt.Errorf("block index not in range of Blockchain.Blocks\nLen: %v\nIndex: %v", len(bc.Blocks), i)
-	}
-	return bc.Blocks[i], nil
-}
 
-func (bc *Blockchain) GetLastBlock() (*Block, error) {
-	return bc.GetBlock(-1)
-}
-
-func (bc *Blockchain) AddBlock(b *Block) {
-	bc.Blocks = append(bc.Blocks, b)
-}
-
-func (bc *Blockchain) AddNewBlock(data []byte) (*Block, error) {
-	lastb, err := bc.GetLastBlock()
+		return item.Value(func(val []byte) error {
+			bs = append([]byte{}, val...)
+			return nil
+		})
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	b := NewBlock(lastb.Hash, data)
-	bc.Proof.Apply(b)
-	bc.AddBlock(b)
+	b, err = DeserializeBlock(bs)
+	if err != nil {
+		return nil, err
+	}
 
+	b.Print()
+
+	return b, nil
+}
+
+func (chain *Blockchain) AddNewBlock(data []byte) (*Block, error) {
+	b := NewBlock(chain.LastHash, data)
+	chain.Proof.Apply(b)
+	return chain.AddBlock(b)
+}
+
+func (chain *Blockchain) AddBlock(b *Block) (*Block, error) {
+	bs, err := b.Serialize()
+	if err != nil {
+		return nil, err
+	}
+
+	err = chain.Database.Update(func(txn *badger.Txn) error {
+		err := txn.Set(b.Hash, bs)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	chain.LastHash = b.Hash
 	return b, nil
 }

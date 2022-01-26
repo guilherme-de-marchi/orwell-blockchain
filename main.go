@@ -5,33 +5,46 @@ import (
 
 	"github.com/Guilherme-De-Marchi/orwell-blockchain/blockchain"
 	"github.com/Guilherme-De-Marchi/orwell-blockchain/proof"
+	"github.com/dgraph-io/badger/v3"
 )
 
 func main() {
+	db, err := badger.Open(badger.DefaultOptions("./tmp/blockchain"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
 	p := proof.NewPoW(2)
-	bc := blockchain.NewBlockchain(p)
+	chain := blockchain.NewBlockchain(db, p)
 
-	_, err := bc.AddNewBlock([]byte("genesis"))
+	_, err = chain.AddNewBlock([]byte("genesis"))
 	if err != nil {
 		log.Fatal(err)
 	}
-	_, err = bc.AddNewBlock([]byte("block 1"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	_, err = bc.AddNewBlock([]byte("block 2"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	_, err = bc.AddNewBlock([]byte("block 3"))
-	if err != nil {
-		log.Fatal(err)
-	}
+	chain.GetBlock(chain.LastHash)
 
-	for _, b := range bc.Blocks {
-		log.Printf("PrevHash: %x\n", b.PrevHash)
-		log.Printf("Data: %s\n", b.Data)
-		log.Printf("Hash: %x\n", b.Hash)
-		log.Printf("Valid: %v\n\n", bc.Proof.Validate(b))
+	_, err = chain.AddNewBlock([]byte("block 1"))
+	if err != nil {
+		log.Fatal(err)
 	}
+	chain.GetBlock(chain.LastHash)
+
+	_, err = chain.AddNewBlock([]byte("block 2"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	chain.GetBlock(chain.LastHash)
+
+	_, err = chain.AddNewBlock([]byte("block 3"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	chain.GetBlock(chain.LastHash)
+
+	_, err = chain.AddNewBlock([]byte("block 4"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	chain.GetBlock(chain.LastHash)
 }
