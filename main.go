@@ -2,13 +2,16 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/Guilherme-De-Marchi/orwell-blockchain/blockchain"
+	"github.com/Guilherme-De-Marchi/orwell-blockchain/cli"
 	"github.com/Guilherme-De-Marchi/orwell-blockchain/proof"
 	"github.com/dgraph-io/badger/v3"
 )
 
 func main() {
+	defer os.Exit(0)
 	db, err := badger.Open(badger.DefaultOptions("./tmp/blockchain"))
 	if err != nil {
 		log.Fatal(err)
@@ -17,34 +20,8 @@ func main() {
 
 	p := proof.NewPoW(2)
 	chain := blockchain.NewBlockchain(db, p)
+	chain.Load()
 
-	_, err = chain.AddNewBlock([]byte("genesis"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	chain.GetBlock(chain.LastHash)
-
-	_, err = chain.AddNewBlock([]byte("block 1"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	chain.GetBlock(chain.LastHash)
-
-	_, err = chain.AddNewBlock([]byte("block 2"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	chain.GetBlock(chain.LastHash)
-
-	_, err = chain.AddNewBlock([]byte("block 3"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	chain.GetBlock(chain.LastHash)
-
-	_, err = chain.AddNewBlock([]byte("block 4"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	chain.GetBlock(chain.LastHash)
+	c := cli.NewCommandLine(chain)
+	c.Run()
 }

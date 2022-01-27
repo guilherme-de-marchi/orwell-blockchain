@@ -1,11 +1,11 @@
-package blockchain
+package block
 
 import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/gob"
-	"fmt"
+	"log"
 )
 
 type Block struct {
@@ -23,9 +23,9 @@ func NewBlock(prevHash, data []byte) *Block {
 }
 
 func (b *Block) Print() {
-	fmt.Printf("PrevHash: %x\n", b.PrevHash)
-	fmt.Printf("Data: %s\n", b.Data)
-	fmt.Printf("Hash: %x\n", b.Hash)
+	log.Printf("PrevHash: %x\n", b.PrevHash)
+	log.Printf("Data: %s\n", b.Data)
+	log.Printf("Hash: %x\n", b.Hash)
 }
 
 func (b *Block) DeriveHash() {

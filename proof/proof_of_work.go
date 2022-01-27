@@ -3,8 +3,13 @@ package proof
 import (
 	"bytes"
 
-	"github.com/Guilherme-De-Marchi/orwell-blockchain/blockchain"
+	"github.com/Guilherme-De-Marchi/orwell-blockchain/block"
 )
+
+type Proofer interface {
+	Apply(*block.Block)
+	Validate(*block.Block) bool
+}
 
 type PoW struct {
 	Difficulty int
@@ -18,7 +23,7 @@ func NewPoW(diff int) PoW {
 	}
 }
 
-func (p PoW) Apply(b *blockchain.Block) {
+func (p PoW) Apply(b *block.Block) {
 	for {
 		b.DeriveHash()
 		if bytes.Equal(b.Hash[:p.Difficulty], p.Target) {
@@ -28,6 +33,6 @@ func (p PoW) Apply(b *blockchain.Block) {
 	}
 }
 
-func (p PoW) Validate(b *blockchain.Block) bool {
+func (p PoW) Validate(b *block.Block) bool {
 	return bytes.Equal(b.Hash[:p.Difficulty], p.Target)
 }
