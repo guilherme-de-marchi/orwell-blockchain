@@ -1,54 +1,45 @@
-package block
+package main
 
 import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/gob"
-	"log"
 )
 
 type Block struct {
-	PrevHash []byte
-	Data     []byte
-	Hash     []byte
-	Nonce    uint64
+	PrevHash, Hash [32]byte
+	Data           string
+	Nonce          uint64
 }
 
-func NewBlock(prevHash, data []byte) *Block {
-	return &Block{
+func NewBlock(prevHash [32]byte, data string) *Block {
+	b := &Block{
 		PrevHash: prevHash,
 		Data:     data,
 	}
+	b.Hash = b.getHash()
+	return b
 }
 
-func (b *Block) Print() {
-	log.Printf("PrevHash: %x\n", b.PrevHash)
-	log.Printf("Data: %s\n", b.Data)
-	log.Printf("Hash: %x\n", b.Hash)
-}
-
-func (b *Block) DeriveHash() {
+func (b *Block) getHash() [32]byte {
 	nonce := make([]byte, 8)
 	binary.LittleEndian.PutUint64(nonce, b.Nonce)
-
 	info := bytes.Join(
 		[][]byte{
-			b.PrevHash,
-			b.Data,
+			b.PrevHash[:],
+			[]byte(b.Data),
 			nonce,
 		},
 		[]byte{},
 	)
-
-	hash := sha256.Sum256(info)
-	b.Hash = hash[:]
+	return sha256.Sum256(info)
 }
 
 func (b *Block) Serialize() ([]byte, error) {
 	var res bytes.Buffer
 	encoder := gob.NewEncoder(&res)
-	err := encoder.Encode(b)
+	err := encoder.Encode(*b)
 	if err != nil {
 		return nil, err
 	}
